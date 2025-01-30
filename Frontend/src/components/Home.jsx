@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import './App.css';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
+import '../App.css';
 
-function App() {
+function Home() {
+  const navigate = useNavigate();
   const [panels, setPanels] = useState([
     {
       id: 1,
@@ -11,16 +13,34 @@ function App() {
       text: '',
     },
   ]);
+  const [user, setUser] = useState(null);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const loggedInUser = JSON.parse(localStorage.getItem('user'));
+    if (!loggedInUser) {
+      navigate('/signup'); // Redirect to login if no user in localStorage
+    } else {
+      setUser(loggedInUser);
+    }
+  }, [navigate]);
 
   const handleAddPanel = () => {
-    setPanels([...panels, { id: panels.length + 1, title: '', image: '', text: '' }]);
+    setPanels([...panels, { id: panels.length + 1, title: '', image: null, text: '' }]);
   };
 
   const handleImageChange = (id, event) => {
-    const newPanels = panels.map((panel) =>
-      panel.id === id ? { ...panel, image: event.target.value } : panel
-    );
-    setPanels(newPanels);
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const newPanels = panels.map((panel) =>
+          panel.id === id ? { ...panel, image: e.target.result } : panel
+        );
+        setPanels(newPanels);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleTextChange = (id, event) => {
@@ -49,8 +69,8 @@ function App() {
       }
 
       if (panel.image) {
-        doc.addImage(panel.image, 'JPEG', 10, y, 180, 180);
-        y += 200;
+        doc.addImage(panel.image, 'JPEG', 10, y, 180, 100);
+        y += 110;
       }
 
       doc.setFontSize(12);
@@ -62,8 +82,10 @@ function App() {
   };
 
   return (
-    <div className="container">
+    <div className="home-container">
       <h1>Interactive Comic Creator</h1>
+      {user && <p>Welcome, {user.username}!</p>}
+
       <div className="panel-container">
         {panels.map((panel) => (
           <div key={panel.id} className="panel">
@@ -77,8 +99,6 @@ function App() {
             <input
               type="file"
               accept="image/*"
-              placeholder="Upload Image"
-              value={panel.image}
               onChange={(e) => handleImageChange(panel.id, e)}
               className="image-input"
             />
@@ -92,6 +112,7 @@ function App() {
           </div>
         ))}
       </div>
+
       <div className="buttons">
         <button onClick={handleAddPanel} className="add-btn">
           Add Panel
@@ -100,8 +121,20 @@ function App() {
           Export as PDF
         </button>
       </div>
+
+      <div className="home-links">
+        <button
+          onClick={() => {
+            localStorage.removeItem('user'); // Log out by removing user data from localStorage
+            navigate('/login'); // Redirect to login page
+          }}
+          className="home-link"
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 }
 
-export default App;
+export default Home;
