@@ -7,7 +7,7 @@ function App() {
     {
       id: 1,
       title: '',
-      image: '',
+      image: null,
       text: '',
     },
   ]);
@@ -75,8 +75,9 @@ function App() {
               className="panel-title"
             />
             <input
-              type="text"
-              placeholder="Image URL"
+              type="file"
+              accept="image/*"
+              placeholder="Upload Image"
               value={panel.image}
               onChange={(e) => handleImageChange(panel.id, e)}
               className="image-input"
